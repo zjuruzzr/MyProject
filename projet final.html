@@ -1,0 +1,600 @@
+ <!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UMASHOP — Livres & Mangas</title>
+
+<style>
+:root{
+  --primary:#6d28d9;
+  --secondary:#ede9fe;
+  --dark:#0f172a;
+  --gray:#6b7280;
+  --bg:#f8fafc;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,Arial,sans-serif}
+body{background:var(--bg);color:var(--dark)}
+a{text-decoration:none;color:inherit;cursor:pointer}
+button{cursor:pointer}
+
+/* HEADER */
+header{
+  position:sticky;top:0;z-index:10;
+  background:#fff;
+  padding:14px 24px;
+  display:flex;align-items:center;gap:20px;
+  border-bottom:1px solid #e5e7eb
+}
+header h1{color:var(--primary)}
+.search{flex:1}
+.search input{
+  width:100%;padding:10px 14px;
+  border-radius:12px;border:1px solid #d1d5db
+}
+.nav-link{font-weight:600}
+.icon-btn{
+  background:var(--secondary);
+  padding:8px 14px;
+  border-radius:14px;font-weight:600
+}
+
+/* HERO */
+.hero{
+  background:linear-gradient(120deg,#020617,#1e293b);
+  color:#fff;padding:80px 20px
+}
+.hero-box{
+  max-width:1200px;margin:auto;
+  display:grid;grid-template-columns:1.3fr 1fr;
+  gap:40px;align-items:center
+}
+.hero-text{
+  background:rgba(255,255,255,.08);
+  padding:40px;border-radius:26px
+}
+.hero-text h1{font-size:3rem;margin:10px 0}
+.hero-text p{margin-bottom:20px}
+.hero-btn{
+  display:inline-block;
+  padding:14px 26px;
+  background:var(--primary);
+  border-radius:18px;font-weight:700
+}
+.hero img{
+  width:100%;border-radius:26px;
+  box-shadow:0 30px 60px rgba(0,0,0,.5)
+}
+
+/* SECTION */
+.section{
+  max-width:1200px;margin:60px auto;
+  padding:0 20px
+}
+
+/* FILTRES */
+.filters{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+  flex-wrap:wrap
+}
+.filters button{
+  padding:8px 16px;
+  border:none;
+  border-radius:20px;
+  background:var(--secondary);
+  font-weight:600
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:22px
+}
+.card{
+  background:#fff;border-radius:20px;
+  box-shadow:0 12px 30px rgba(0,0,0,.08);
+  overflow:hidden;
+  transition:.3s
+}
+.card:hover{transform:translateY(-6px)}
+.card img{width:100%;height:260px;object-fit:cover}
+.card .info{padding:14px}
+.card h4{font-size:1rem}
+.card p{font-size:.85rem;color:var(--gray)}
+.price{font-weight:800;margin:8px 0}
+.card button{
+  width:calc(100% - 28px);
+  margin:0 14px 14px;
+  padding:10px;
+  border:none;border-radius:14px;
+  background:var(--primary);
+  color:#fff;font-weight:600
+}
+
+/* PDP UNIQUE */
+#pdp{display:none;padding:40px}
+.pdp-content{
+  max-width:1100px;
+  margin:auto;
+  background:#fff;
+  border-radius:20px;
+  padding:30px
+}
+.back{
+  margin-bottom:20px;
+  display:inline-block;
+  color:var(--primary);
+  font-weight:600
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>
+  <img src="./images/logouma.png" alt="UMA SHOP" style="height:60px">
+</h1>
+
+  <a class="nav-link" onclick="goHome()">Accueil</a>
+  <a class="nav-link" onclick="openContactPDP()">Contact</a>
+
+  <div class="search">
+    <input placeholder="Rechercher un livre, manga, auteur...">
+  </div>
+
+  <a class="icon-btn" onclick="openCartPDP()">
+  🛒 Panier <span id="cartCount"></span>
+</a>
+
+</header>
+
+<div id="main">
+
+<section class="hero">
+  <div class="hero-box">
+    <div class="hero-text">
+      <h3>La librairie nouvelle génération</h3>
+      <h1>Mangas, Romans & BD</h1>
+      <p>Découvrez les meilleures lectures du moment (surtout Uma musume).</p>
+      <a class="hero-btn" onclick="scrollShop()">Explorer</a>
+    </div>
+    <img src="./images/fist.jpg" >
+
+ 
+</a>
+
+  </div>
+</section>
+
+<section id="shop" class="section">
+  <h2>📦 Boutique</h2>
+
+  <div class="filters">
+    <button onclick="filterProducts('all')">Tous</button>
+    <button onclick="filterProducts('manga')">Mangas</button>
+    <button onclick="filterProducts('roman')">Romans</button>
+    
+  </div>
+
+  <div class="grid" id="productGrid"></div>
+</section>
+</div>
+
+<section id="pdp">
+  <div class="pdp-content">
+    <span class="back" onclick="goHome()">← Retour</span>
+    <div id="pdpBody"></div>
+  </div>
+</section>
+
+
+<script>
+/* ====== RECHERCHE ====== */
+const searchInput = document.querySelector(".search input");
+
+searchInput.addEventListener("input", function () {
+  const query = this.value.toLowerCase();
+  const grid = document.getElementById("productGrid");
+  grid.innerHTML = "";
+
+  products.forEach((p, i) => {
+    // respecter le filtre actif
+    if (currentFilter !== "all" && p.type !== currentFilter) return;
+
+    // recherche sur titre + auteur
+    const text = (p.title + " " + p.author).toLowerCase();
+    if (!text.includes(query)) return;
+
+    grid.innerHTML += `
+      <div class="card">
+        <img src="${p.img}">
+        <div class="info">
+          <h4>${p.title}</h4>
+          <p>${p.author}</p>
+          <div class="price">${p.price} DH</div>
+        </div>
+        <button onclick="openProductPDP(${i})">Voir le produit</button>
+      </div>
+    `;
+  });
+});
+</script>
+
+
+<script>
+const products=[
+
+/* MANGAS */
+/// === UMA MUSUME: CINDERELLA GRAY — TOMES 1 à 22 ===
+{title:"Uma Musume: Cinderella Gray — Vol. 1",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma1.jpg",desc:"Tome 1 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 2",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma2.jpg",desc:"Tome 2 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 3",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma3.jpg",desc:"Tome 3 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 4",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma4.jpg",desc:"Tome 4 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 5",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma5.jpg",desc:"Tome 5 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 6",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma6.jpg",desc:"Tome 6 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 7",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma7.jpg",desc:"Tome 7 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 8",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma8.jpg",desc:"Tome 8 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 9",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma9.jpg",desc:"Tome 9 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 10",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma10.jpg",desc:"Tome 10 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 11",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma11.jpg",desc:"Tome 11 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 12",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma12.jpg",desc:"Tome 12 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 13",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma13.jpg",desc:"Tome 13 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 14",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma14.jpg",desc:"Tome 14 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 15",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma15.jpg",desc:"Tome 15 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 16",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma16.jpg",desc:"Tome 16 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 17",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma17.jpg",desc:"Tome 17 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 18",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma18.jpg",desc:"Tome 18 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 19",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma19.jpg",desc:"Tome 19 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 20",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma20.jpg",desc:"Tome 20 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 21",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma21.jpg",desc:"Tome 21 du manga Uma Musume: Cinderella Gray."},
+{title:"Uma Musume: Cinderella Gray — Vol. 22",author:"Junnosuke Ito & Masafumi Sugiura",price:89,type:"manga",img:"./images/uma22.jpeg",desc:"Tome 22 du manga Uma Musume: Cinderella Gray."},
+
+{title:"Oshi no Ko — Tome 16", author:"Aka Akasaka & Mengo Yokoyari", price:95, type:"manga", img:"./images/os16.jpg", desc:"Tome 16 du manga Oshi no Ko."},
+{title:"Jujutsu Kaisen — Tome 30", author:"Gege Akutami", price:95, type:"manga", img:"./images/jjk30.jpg", desc:"Tome 30 du manga Jujutsu Kaisen."},
+{title:"Jujutsu Kaisen — Tome 26", author:"Gege Akutami", price:95, type:"manga", img:"./images/jjk26.jpg", desc:"Tome 26 du manga Jujutsu Kaisen."},
+{title:"Frieren — Tome 11", author:"Kanehito Yamada & Tsukasa Abe", price:95, type:"manga", img:"./images/fri11.jpg", desc:"Tome 11 du manga Frieren."},
+{title:"Demon Slayer — Tome 21", author:"Koyoharu Gotouge", price:95, type:"manga", img:"./images/demonslayer21.jpg", desc:"Tome 21 du manga Demon Slayer."},
+{title:"Dandadan — Tome 21", author:"Yukinobu Tatsu", price:95, type:"manga", img:"./images/dan21.jpg", desc:"Tome 21 du manga Dandadan."},
+{title:"Dandadan — Tome 18", author:"Yukinobu Tatsu", price:95, type:"manga", img:"./images/dan18.jpg", desc:"Tome 18 du manga Dandadan."},
+{title:"Chainsaw Man — Tome 20", author:"Tatsuki Fujimoto", price:95, type:"manga", img:"./images/CM20.jpg", desc:"Tome 20 du manga Chainsaw Man."},
+{title:"Les Carnets de L'Apothicaire — Tome 15", author:"Kae Maruya & Itsuki Nanao", price:95, type:"manga", img:"./images/carnet15.jpg", desc:"Tome 15 du manga Les Carnets de L'Apothicaire."},
+{title:"Bloom — Tome 21", author:"Hiroki Haruhara", price:95, type:"manga", img:"./images/bloom21.jpg", desc:"Tome 21 du manga Bloom."},
+{title:"Blue Lock — Tome 33", author:"Muneyuki Kaneshiro & Yusuke Nomura", price:95, type:"manga", img:"./images/bl33.jpg", desc:"Tome 33 du manga Blue Lock."},
+{title:"Blue Lock — Tome 36", author:"Muneyuki Kaneshiro & Yusuke Nomura", price:95, type:"manga", img:"./images/bl36.jpg", desc:"Tome 36 du manga Blue Lock."},
+{title:"Ao Ashi — Tome 37", author:"Yuugo Kobayashi", price:95, type:"manga", img:"./images/ao37.jpg", desc:"Tome 37 du manga Ao Ashi."},
+{title:"Ao Ashi — Tome 36", author:"Yuugo Kobayashi", price:95, type:"manga", img:"./images/ao36.jpg", desc:"Tome 36 du manga Ao Ashi."},
+{title:"Ao Ashi — Tome 34", author:"Yuugo Kobayashi", price:95, type:"manga", img:"./images/ao34.jpg", desc:"Tome 34 du manga Ao Ashi."},
+{title:"Sakamoto Days — Tome 20", author:"Yuto Suzuki", price:95, type:"manga", img:"./images/sk18.jpg", desc:"Tome 18 du manga Sakamoto Days."},
+{title:"Sakamoto Days — Tome 19", author:"Yuto Suzuki", price:95, type:"manga", img:"./images/sk19.jpg", desc:"Tome 19 du manga Sakamoto Days."},
+{title:"Sakamoto Days — Tome 25", author:"Yuto Suzuki", price:95, type:"manga", img:"./images/sk25.jpg", desc:"Tome 25 du manga Sakamoto Days."},
+{title:"Sakamoto Days — Tome 13", author:"Yuto Suzuki", price:95, type:"manga", img:"./images/sk13.jpg", desc:"Tome 13 du manga Sakamoto Days."},
+{title:"My Hero Academia — Tome 42", author:"Kohei Horikoshi", price:95, type:"manga", img:"./images/mha42.jpg", desc:"Tome 42 du manga My Hero Academia."},
+{title:"Soul Eater — Tome 18", author:"Atsushi Ohkubo", price:95, type:"manga", img:"./images/sl18.jpg", desc:"Tome 18 du manga Soul Eater."},
+{title:"Undead Unluck — Tome 21", author:"Yuki Tabata", price:95, type:"manga", img:"./images/un21.jpg", desc:"Tome 21 du manga Undead Unluck."},
+
+
+/* ROMANS (100+) */
+{title:"L'Étranger",author:"Albert Camus",price:65,type:"roman",img:"https://covers.openlibrary.org/b/id/8231856-L.jpg",desc:"Classique français."},
+{title:"La Peste",author:"Albert Camus",price:72,type:"roman",img:"https://covers.openlibrary.org/b/id/10577441-L.jpg",desc:"Allégorie."},
+{title:"Les Misérables",author:"Victor Hugo",price:120,type:"roman",img:"https://covers.openlibrary.org/b/id/9874156-L.jpg",desc:"Fresque sociale."},
+{title:"Notre-Dame de Paris",author:"Victor Hugo",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/10909258-L.jpg",desc:"Roman romantique."},
+{title:"Germinal",author:"Émile Zola",price:88,type:"roman",img:"https://covers.openlibrary.org/b/id/11032732-L.jpg",desc:"Monde ouvrier."},
+{title:"Madame Bovary",author:"Gustave Flaubert",price:78,type:"roman",img:"https://covers.openlibrary.org/b/id/10575163-L.jpg",desc:"Désillusion."},
+{title:"Bel-Ami",author:"Guy de Maupassant",price:70,type:"roman",img:"https://covers.openlibrary.org/b/id/10439865-L.jpg",desc:"Ascension sociale."},
+{title:"1984",author:"George Orwell",price:90,type:"roman",img:"https://covers.openlibrary.org/b/id/7222246-L.jpg",desc:"Dystopie."},
+{title:"Fahrenheit 451",author:"Ray Bradbury",price:80,type:"roman",img:"https://covers.openlibrary.org/b/id/9255890-L.jpg",desc:"Censure."},
+{title:"Le Petit Prince",author:"Antoine de Saint-Exupéry",price:55,type:"roman",img:"https://covers.openlibrary.org/b/id/10569836-L.jpg",desc:"Conte philosophique."},
+
+{title:"Le Rouge et le Noir",author:"Stendhal",price:85,type:"roman",img:"https://covers.openlibrary.org/b/id/8231991-L.jpg",desc:"Ambition et passion."},
+{title:"Voyage au centre de la Terre",author:"Jules Verne",price:90,type:"roman",img:"https://covers.openlibrary.org/b/id/8235089-L.jpg",desc:"Aventure scientifique."},
+{title:"Vingt mille lieues sous les mers",author:"Jules Verne",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/8235092-L.jpg",desc:"Exploration sous-marine."},
+{title:"L’Île mystérieuse",author:"Jules Verne",price:92,type:"roman",img:"https://covers.openlibrary.org/b/id/8235095-L.jpg",desc:"Survie et science."},
+{title:"Le Tour du monde en 80 jours",author:"Jules Verne",price:88,type:"roman",img:"https://covers.openlibrary.org/b/id/8235098-L.jpg",desc:"Voyage et défi."},
+{title:"Robinson Crusoé",author:"Daniel Defoe",price:80,type:"roman",img:"https://covers.openlibrary.org/b/id/8235101-L.jpg",desc:"Survie sur une île."},
+{title:"Les Hauts de Hurlevent",author:"Emily Brontë",price:90,type:"roman",img:"https://covers.openlibrary.org/b/id/8235104-L.jpg",desc:"Amour tragique."},
+{title:"Le Portrait de Dorian Gray",author:"Oscar Wilde",price:88,type:"roman",img:"https://covers.openlibrary.org/b/id/8235107-L.jpg",desc:"Beauté et décadence."},
+{title:"L’Appel de la forêt",author:"Jack London",price:75,type:"roman",img:"https://covers.openlibrary.org/b/id/8235110-L.jpg",desc:"Retour à la nature."},
+{title:"Croc-Blanc",author:"Jack London",price:75,type:"roman",img:"https://covers.openlibrary.org/b/id/8235113-L.jpg",desc:"Aventure animale."},
+
+{title:"Le Seigneur des Anneaux — La Communauté de l’Anneau",author:"J.R.R. Tolkien",price:120,type:"roman",img:"https://covers.openlibrary.org/b/id/8235116-L.jpg",desc:"Fantasy épique."},
+{title:"Le Seigneur des Anneaux — Les Deux Tours",author:"J.R.R. Tolkien",price:120,type:"roman",img:"https://covers.openlibrary.org/b/id/8235119-L.jpg",desc:"Fantasy épique."},
+{title:"Le Seigneur des Anneaux — Le Retour du Roi",author:"J.R.R. Tolkien",price:120,type:"roman",img:"https://covers.openlibrary.org/b/id/8235122-L.jpg",desc:"Fantasy épique."},
+{title:"Le Hobbit",author:"J.R.R. Tolkien",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/8235125-L.jpg",desc:"Aventure fantastique."},
+{title:"Dune",author:"Frank Herbert",price:115,type:"roman",img:"https://covers.openlibrary.org/b/id/8235128-L.jpg",desc:"Science-fiction culte."},
+{title:"Fondation",author:"Isaac Asimov",price:105,type:"roman",img:"https://covers.openlibrary.org/b/id/8235131-L.jpg",desc:"Empire galactique."},
+{title:"Neuromancien",author:"William Gibson",price:98,type:"roman",img:"https://covers.openlibrary.org/b/id/8235134-L.jpg",desc:"Cyberpunk."},
+{title:"La Guerre des mondes",author:"H.G. Wells",price:90,type:"roman",img:"https://covers.openlibrary.org/b/id/8235137-L.jpg",desc:"Invasion extraterrestre."},
+{title:"Do Androids Dream of Electric Sheep?",author:"Philip K. Dick",price:100,type:"roman",img:"https://covers.openlibrary.org/b/id/8235140-L.jpg",desc:"SF philosophique."},
+{title:"Ubik",author:"Philip K. Dick",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/8235143-L.jpg",desc:"Réalité instable."},
+
+{title:"L’Attrape-cœurs",author:"J.D. Salinger",price:85,type:"roman",img:"https://covers.openlibrary.org/b/id/8235146-L.jpg",desc:"Adolescence et malaise."},
+{title:"Sur la route",author:"Jack Kerouac",price:90,type:"roman",img:"https://covers.openlibrary.org/b/id/8235149-L.jpg",desc:"Beat Generation."},
+{title:"Des souris et des hommes",author:"John Steinbeck",price:78,type:"roman",img:"https://covers.openlibrary.org/b/id/8235152-L.jpg",desc:"Amitié et tragédie."},
+{title:"À l’est d’Éden",author:"John Steinbeck",price:110,type:"roman",img:"https://covers.openlibrary.org/b/id/8235155-L.jpg",desc:"Saga familiale."},
+{title:"Le Grand Gatsby",author:"F. Scott Fitzgerald",price:85,type:"roman",img:"https://covers.openlibrary.org/b/id/8235158-L.jpg",desc:"Rêve américain."},
+{title:"Lolita",author:"Vladimir Nabokov",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/8235161-L.jpg",desc:"Roman controversé."},
+{title:"Le Procès",author:"Franz Kafka",price:88,type:"roman",img:"https://covers.openlibrary.org/b/id/8235164-L.jpg",desc:"Absurdité judiciaire."},
+{title:"La Métamorphose",author:"Franz Kafka",price:70,type:"roman",img:"https://covers.openlibrary.org/b/id/8235167-L.jpg",desc:"Aliénation."},
+{title:"Le Rouge et le Noir",author:"Stendhal",price:85,type:"roman",img:"https://covers.openlibrary.org/b/id/8231991-L.jpg",desc:"Ambition et passion."},
+{title:"Voyage au centre de la Terre",author:"Jules Verne",price:90,type:"roman",img:"https://covers.openlibrary.org/b/id/8235089-L.jpg",desc:"Aventure scientifique."},
+{title:"Vingt mille lieues sous les mers",author:"Jules Verne",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/8235092-L.jpg",desc:"Exploration sous-marine."},
+{title:"L’Île mystérieuse",author:"Jules Verne",price:92,type:"roman",img:"https://covers.openlibrary.org/b/id/8235095-L.jpg",desc:"Survie et science."},
+{title:"Le Tour du monde en 80 jours",author:"Jules Verne",price:88,type:"roman",img:"https://covers.openlibrary.org/b/id/8235098-L.jpg",desc:"Voyage et défi."},
+{title:"Robinson Crusoé",author:"Daniel Defoe",price:80,type:"roman",img:"https://covers.openlibrary.org/b/id/8235101-L.jpg",desc:"Survie sur une île."},
+{title:"Les Hauts de Hurlevent",author:"Emily Brontë",price:90,type:"roman",img:"https://covers.openlibrary.org/b/id/8235104-L.jpg",desc:"Amour tragique."},
+{title:"Le Portrait de Dorian Gray",author:"Oscar Wilde",price:88,type:"roman",img:"https://covers.openlibrary.org/b/id/8235107-L.jpg",desc:"Beauté et décadence."},
+{title:"L’Appel de la forêt",author:"Jack London",price:75,type:"roman",img:"https://covers.openlibrary.org/b/id/8235110-L.jpg",desc:"Retour à la nature."},
+{title:"Croc-Blanc",author:"Jack London",price:75,type:"roman",img:"https://covers.openlibrary.org/b/id/8235113-L.jpg",desc:"Aventure animale."},
+
+{title:"Le Seigneur des Anneaux — La Communauté de l’Anneau",author:"J.R.R. Tolkien",price:120,type:"roman",img:"https://covers.openlibrary.org/b/id/8235116-L.jpg",desc:"Fantasy épique."},
+{title:"Le Seigneur des Anneaux — Les Deux Tours",author:"J.R.R. Tolkien",price:120,type:"roman",img:"https://covers.openlibrary.org/b/id/8235119-L.jpg",desc:"Fantasy épique."},
+{title:"Le Seigneur des Anneaux — Le Retour du Roi",author:"J.R.R. Tolkien",price:120,type:"roman",img:"https://covers.openlibrary.org/b/id/8235122-L.jpg",desc:"Fantasy épique."},
+{title:"Le Hobbit",author:"J.R.R. Tolkien",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/8235125-L.jpg",desc:"Aventure fantastique."},
+{title:"Dune",author:"Frank Herbert",price:115,type:"roman",img:"https://covers.openlibrary.org/b/id/8235128-L.jpg",desc:"Science-fiction culte."},
+{title:"Fondation",author:"Isaac Asimov",price:105,type:"roman",img:"https://covers.openlibrary.org/b/id/8235131-L.jpg",desc:"Empire galactique."},
+{title:"Neuromancien",author:"William Gibson",price:98,type:"roman",img:"https://covers.openlibrary.org/b/id/8235134-L.jpg",desc:"Cyberpunk."},
+{title:"La Guerre des mondes",author:"H.G. Wells",price:90,type:"roman",img:"https://covers.openlibrary.org/b/id/8235137-L.jpg",desc:"Invasion extraterrestre."},
+{title:"Do Androids Dream of Electric Sheep?",author:"Philip K. Dick",price:100,type:"roman",img:"https://covers.openlibrary.org/b/id/8235140-L.jpg",desc:"SF philosophique."},
+{title:"Ubik",author:"Philip K. Dick",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/8235143-L.jpg",desc:"Réalité instable."},
+
+{title:"L’Attrape-cœurs",author:"J.D. Salinger",price:85,type:"roman",img:"https://covers.openlibrary.org/b/id/8235146-L.jpg",desc:"Adolescence et malaise."},
+{title:"Sur la route",author:"Jack Kerouac",price:90,type:"roman",img:"https://covers.openlibrary.org/b/id/8235149-L.jpg",desc:"Beat Generation."},
+{title:"Des souris et des hommes",author:"John Steinbeck",price:78,type:"roman",img:"https://covers.openlibrary.org/b/id/8235152-L.jpg",desc:"Amitié et tragédie."},
+{title:"À l’est d’Éden",author:"John Steinbeck",price:110,type:"roman",img:"https://covers.openlibrary.org/b/id/8235155-L.jpg",desc:"Saga familiale."},
+{title:"Le Grand Gatsby",author:"F. Scott Fitzgerald",price:85,type:"roman",img:"https://covers.openlibrary.org/b/id/8235158-L.jpg",desc:"Rêve américain."},
+{title:"Lolita",author:"Vladimir Nabokov",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/8235161-L.jpg",desc:"Roman controversé."},
+{title:"Le Procès",author:"Franz Kafka",price:88,type:"roman",img:"https://covers.openlibrary.org/b/id/8235164-L.jpg",desc:"Absurdité judiciaire."},
+{title:"La Métamorphose",author:"Franz Kafka",price:70,type:"roman",img:"https://covers.openlibrary.org/b/id/8235167-L.jpg",desc:"Aliénation."},
+{title:"L’Insoutenable légèreté de l’être",author:"Milan Kundera",price:95,type:"roman",img:"https://covers.openlibrary.org/b/id/8235170-L.jpg",desc:"Amour et philosophie."},
+{title:"Le Maître et Marguerite",author:"Boulgakov",price:110,type:"roman",img:"https://covers.openlibrary.org/b/id/8235173-L.jpg",desc:"Fantastique satirique."}
+
+
+
+
+];
+
+let cart=[];
+let currentFilter="all";
+
+/* NAV */
+function showPDP(html){
+ document.getElementById("main").style.display="none";
+ document.getElementById("pdp").style.display="block";
+ document.getElementById("pdpBody").innerHTML=html;
+ window.scrollTo(0,0);
+}
+function goHome(){
+ document.getElementById("pdp").style.display="none";
+ document.getElementById("main").style.display="block";
+}
+
+/* PRODUITS */
+function renderProducts(){
+ const grid=document.getElementById("productGrid");
+ grid.innerHTML="";
+ products.forEach((p,i)=>{
+  if(currentFilter!=="all" && p.type!==currentFilter) return;
+  grid.innerHTML+=`
+   <div class="card">
+    <img src="${p.img}">
+    <div class="info">
+     <h4>${p.title}</h4>
+     <p>${p.author}</p>
+     <div class="price">${p.price} DH</div>
+    </div>
+    <button onclick="openProductPDP(${i})">Voir le produit</button>
+   </div>`;
+ });
+}
+function filterProducts(type){
+ currentFilter=type;
+ renderProducts();
+}
+
+/* PDP PRODUIT */
+function openProductPDP(i){
+ const p=products[i];
+ showPDP(`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px">
+   <img src="${p.img}" style="width:100%;border-radius:16px">
+   <div>
+    <h2>${p.title}</h2>
+    <p>${p.author}</p>
+    <div class="price">${p.price} DH</div>
+    <p>${p.desc}</p>
+    <button onclick="addToCart(${i})">Ajouter au panier</button>
+   </div>
+  </div>
+ `);
+}
+
+/* PANIER */
+function openCartPDP(){
+  if(cart.length === 0){
+    showPDP("<h2>Votre panier est vide</h2>");
+    return;
+  }
+
+  let total = 0;
+  let html = "<h2>🛒 Mon panier</h2>";
+
+  cart.forEach((p, index) => {
+    total += p.price;
+
+    html += `
+      <div style="
+        display:flex;
+        align-items:center;
+        gap:15px;
+        margin:12px 0;
+        border-bottom:1px solid #ddd;
+        padding-bottom:10px
+      ">
+        <img src="${p.img}" alt="${p.title}"
+             style="width:60px;border-radius:6px">
+
+        <div style="flex:1">
+          <strong>${p.title}</strong><br>
+          <span>${p.price} DH</span>
+        </div>
+
+        <button onclick="removeFromCart(${index})"
+                style="
+                  background:#ef4444;
+                  color:white;
+                  border:none;
+                  border-radius:10px;
+                  padding:6px 10px;
+                  font-weight:700;
+                  cursor:pointer
+                ">
+          ❌
+        </button>
+      </div>
+    `;
+  });
+
+  html += `
+    <hr>
+    <h3 style="text-align:right">Total : ${total} DH</h3>
+
+    <div style="text-align:right;margin-top:20px">
+      <button onclick="validateCart()"
+              style="
+                padding:12px 24px;
+                background:#6d28d9;
+                color:#fff;
+                border:none;
+                border-radius:14px;
+                font-weight:700;
+                cursor:pointer
+              ">
+        ✅ Valider le panier
+      </button>
+    </div>
+  `;
+
+  showPDP(html);
+}
+
+/* CONTACT */
+/* CONTACT */
+function openContactPDP() {
+  showPDP(`
+    <h2>📩 Contact</h2>
+
+    <input id="email"
+           type="email"
+           placeholder="Email"
+           style="width:100%;padding:10px;margin:10px 0"
+           required>
+
+    <textarea id="message"
+              placeholder="Message"
+              style="width:100%;padding:10px;height:120px"
+              required></textarea>
+
+    <button onclick="sendMessage()">Envoyer</button>
+  `);
+}
+
+function sendMessage() {
+  const email = document.getElementById("email").value.trim();
+  const message = document.getElementById("message").value.trim();
+
+  // règle email simple
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(email)) {
+    alert("❌ Email invalide");
+    return;
+  }
+
+  if (message === "") {
+    alert("❌ Le message est vide");
+    return;
+  }
+
+  alert("✅ Message envoyé");
+
+  // actualise la page
+  location.reload();
+}
+
+function scrollShop(){
+ document.getElementById("shop").scrollIntoView({behavior:"smooth"});
+}
+
+renderProducts();
+
+// Panier
+
+
+// Fonction appelée quand on clique sur "Ajouter au panier"
+function addToCart(index){
+  cart.push(products[index]);
+  updateCartCount();
+  showAddMessage();
+}
+
+
+
+// Message de confirmation
+function showAddMessage(){
+  const msg = document.createElement("div");
+  msg.textContent = "✅ Produit ajouté au panier";
+
+  msg.style.position = "fixed";
+  msg.style.bottom = "25px";
+  msg.style.right = "25px";
+  msg.style.background = "#16a34a";
+  msg.style.color = "#fff";
+  msg.style.padding = "12px 20px";
+  msg.style.borderRadius = "14px";
+  msg.style.fontWeight = "600";
+  msg.style.boxShadow = "0 8px 20px rgba(0,0,0,.25)";
+  msg.style.zIndex = "9999";
+
+  document.body.appendChild(msg);
+
+  setTimeout(() => msg.remove(), 2000);
+}
+
+function updateCartCount(){
+  const badge = document.getElementById("cartCount");
+
+  if(cart.length === 0){
+    badge.textContent = "";
+    return;
+  }
+
+  badge.textContent = `(${cart.length})`;
+}
+
+
+function validateCart(){
+  if(cart.length === 0) return;
+
+  alert("✅ Commande validée avec succès !");
+
+  cart = [];
+  updateCartCount();
+  goHome();
+}
+
+function removeFromCart(index){
+  cart.splice(index, 1);   // supprime le produit
+  updateCartCount();      // met à jour le compteur
+  openCartPDP();          // rafraîchit l'affichage du panier
+}
+
+
+
+</script>
+
+</body>
+</html>
